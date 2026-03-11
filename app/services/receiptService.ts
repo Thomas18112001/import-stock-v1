@@ -68,6 +68,43 @@ const PRESTA_ORDER_DETAILS_RETRY_DELAY_MS = 750;
 const EMPTY_PRESTA_CHECKPOINT: PrestaCheckpoint = { dateUpd: "1970-01-01 00:00:00", orderId: 0 };
 const RECEIPT_LINE_SCAN_PAGE_SIZE = 250;
 const RECEIPT_LINE_SCAN_MAX_PAGES = 120;
+
+function toBoutiqueContext(location: { id: string; name: string }) {
+  const mapping = getBoutiqueMappingByLocationName(location.name);
+  if (!mapping || mapping.prestaCustomerId == null) {
+    throw new Error(buildMissingPrestaConfigMessage(location.name));
+  }
+  return {
+    locationId: location.id,
+    locationName: location.name,
+    prestaCustomerId: mapping.prestaCustomerId,
+  };
+}
+
+export function pickCronSyncLocation(
+  locations: Array<{ id: string; name: string }>,
+  input: { requestedLocationId?: string | null; defaultLocationName: string },
+) {
+  const locationId = input.requestedLocationId?.trim() ?? "";
+  if (locationId) {
+    const requestedLocation = locations.find((location) => location.id === locationId);
+    if (!requestedLocation) {
+      throw new Error("Boutique introuvable.");
+    }
+    return toBoutiqueContext(requestedLocation);
+  }
+
+  const defaultLocationName = input.defaultLocationName.trim();
+  const fallbackLocation = locations.find(
+    (location) => location.name.trim().toLowerCase() === defaultLocationName.toLowerCase(),
+  );
+
+  if (!fallbackLocation) {
+    throw new Error(`Boutique par défaut introuvable dans Shopify: "${defaultLocationName}".`);
+  }
+
+  return toBoutiqueContext(fallbackLocation);
+}
 const receiptLineQuerySupportedByType = new Map<string, boolean>();
 export type CursorBootstrapSource = "none" | "legacy_global_cursor" | "existing_receipts" | "latest_presta_head";
 
@@ -481,15 +518,20 @@ async function resolveBoutiqueContext(admin: AdminClient, locationId: string) {
   if (!location) {
     throw new Error("Boutique introuvable.");
   }
-  const mapping = getBoutiqueMappingByLocationName(location.name);
-  if (!mapping || mapping.prestaCustomerId == null) {
-    throw new Error(buildMissingPrestaConfigMessage(location.name));
+  return toBoutiqueContext(location);
+}
+
+export async function resolveCronSyncLocationId(admin: AdminClient, requestedLocationId?: string | null): Promise<string> {
+  const locationId = requestedLocationId?.trim() ?? "";
+  if (locationId) {
+    return (await resolveBoutiqueContext(admin, locationId)).locationId;
   }
-  return {
-    locationId: location.id,
-    locationName: location.name,
-    prestaCustomerId: mapping.prestaCustomerId,
-  };
+
+  const locations = await listLocations(admin);
+  return pickCronSyncLocation(locations, {
+    requestedLocationId: locationId,
+    defaultLocationName: env.shopifyDefaultLocationName,
+  }).locationId;
 }
 
 async function getExistingReceiptForOrder(

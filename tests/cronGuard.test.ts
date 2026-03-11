@@ -95,3 +95,33 @@ test("route cron sync refuse une boutique invalide", async () => {
     Date.now = originalNow;
   }
 });
+
+test("resolver cron utilise la boutique par défaut quand locationId est absent", async () => {
+  await loadCronGuard();
+  const { pickCronSyncLocation } = await import("../app/services/receiptService");
+
+  const resolved = pickCronSyncLocation(
+    [
+      { id: "gid://shopify/Location/1", name: "Boutique Toulon" },
+      { id: "gid://shopify/Location/2", name: "Boutique Chicago" },
+    ],
+    { defaultLocationName: "Boutique Toulon" },
+  );
+
+  assert.equal(resolved.locationId, "gid://shopify/Location/1");
+  assert.equal(resolved.locationName, "Boutique Toulon");
+});
+
+test("resolver cron refuse une boutique par défaut non configurée pour Prestashop", async () => {
+  await loadCronGuard();
+  const { pickCronSyncLocation } = await import("../app/services/receiptService");
+
+  assert.throws(
+    () =>
+      pickCronSyncLocation(
+        [{ id: "gid://shopify/Location/2", name: "Boutique Chicago" }],
+        { defaultLocationName: "Boutique Chicago" },
+      ),
+    /n'est pas encore configurée pour Prestashop BtoB/i,
+  );
+});
