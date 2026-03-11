@@ -70,6 +70,7 @@ export default [
 
   route("api/cron/synchroniser", "routes/api.cron.sync.tsx"),
   route("api/cron/alertes", "routes/api.cron.alerts.tsx"),
+  route("api/health", "routes/api.health.tsx"),
   route("api/debug/sync-presta", "routes/api.debug.presta-sync.tsx"),
   route("api/sales/agg", "routes/api.sales.agg.tsx"),
   route("api/sales/rate", "routes/api.sales.rate.tsx"),
