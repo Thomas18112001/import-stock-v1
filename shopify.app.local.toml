@@ -1,0 +1,17 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "8445df38113361a904c111346e1a2698"
+name = "Import Stock Boutique DEV"
+application_url = "https://example.com"
+embedded = true
+
+[webhooks]
+api_version = "2026-04"
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_metaobject_definitions,write_metaobject_definitions,read_metaobjects,write_metaobjects,read_inventory,read_locations,read_products,write_inventory"
+
+[auth]
+redirect_urls = [ "https://example.com/api/auth" ]
+

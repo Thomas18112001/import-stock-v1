@@ -1,0 +1,17 @@
+[Unit]
+Description=Import Stock V1 Shopify App
+After=network.target
+
+[Service]
+Type=simple
+User=appuser
+Group=appuser
+WorkingDirectory=/var/www/import-stock-v1
+EnvironmentFile=/var/www/import-stock-v1/.env
+ExecStart=/usr/bin/npm run start:prod
+Restart=always
+RestartSec=5
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target

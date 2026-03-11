@@ -1,0 +1,6 @@
+node_modules
+build
+public/build
+*/*.yml
+.shopify
+extensions/pos-incoming-smart-grid/shopify.d.ts
